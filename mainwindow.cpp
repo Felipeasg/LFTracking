@@ -14,8 +14,10 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     ui->setupUi(this);
 
+    thread = new MyThread(this);
+    connect(thread, SIGNAL(dataDecoded(int32_t*)), ui->glWidget, SLOT(on_addEncoderPulesVrVl(int32_t*)));
 
-
+    thread->start();
 
 //    timer = new QTimer(this);
 
@@ -24,30 +26,30 @@ MainWindow::MainWindow(QWidget *parent) :
 
     timer = new QTimer(this);
 
-    connect(timer, SIGNAL(timeout()), this, SLOT(on_timerElapsed()));
-//    timer->start(100);
+//    connect(timer, SIGNAL(timeout()), this, SLOT(on_timerElapsed()));
+////    timer->start(100);
 
-    serial = new QSerialPort(this);
+//    serial = new QSerialPort(this);
 
-    //https://www.youtube.com/watch?v=UD78xyKbrfk
-    serial->setPortName("ttyUSB0");
-    serial->setBaudRate(QSerialPort::Baud115200);
-    serial->setDataBits(QSerialPort::Data8);
-    serial->setParity(QSerialPort::NoParity);
-    serial->setStopBits(QSerialPort::OneStop);
-    serial->setFlowControl(QSerialPort::NoFlowControl);
+//    //https://www.youtube.com/watch?v=UD78xyKbrfk
+//    serial->setPortName("ttyUSB0");
+//    serial->setBaudRate(QSerialPort::Baud115200);
+//    serial->setDataBits(QSerialPort::Data8);
+//    serial->setParity(QSerialPort::NoParity);
+//    serial->setStopBits(QSerialPort::OneStop);
+//    serial->setFlowControl(QSerialPort::NoFlowControl);
 
-    if(serial->open(QIODevice::ReadWrite))
-    {
-        qDebug() << "Opened";
-    }
-    else
-    {
-        qDebug() << "Could not open";
-    }
+//    if(serial->open(QIODevice::ReadWrite))
+//    {
+//        qDebug() << "Opened";
+//    }
+//    else
+//    {
+//        qDebug() << "Could not open";
+//    }
 
 
-    connect(serial, SIGNAL(readyRead()), this, SLOT(serialReceived()));
+//    connect(serial, SIGNAL(readyRead()), this, SLOT(serialReceived()));
     connect(this, SIGNAL(pointsadded()), this, SLOT(on_drawPoints()));
     connect(this, SIGNAL(drawnow()), ui->glWidget, SLOT(update()));
 
@@ -186,4 +188,13 @@ void MainWindow::on_timerElapsed()
     }
 
     emit drawnow();
+}
+
+void MainWindow::readData()
+{
+    while(1)
+    {
+        qDebug() << "Receiving data";
+
+    }
 }

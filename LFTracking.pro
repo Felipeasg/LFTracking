@@ -15,10 +15,12 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
-    mythread.cpp
+    mythread.cpp \
+    buffer.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
-    mythread.h
+    mythread.h \
+    buffer.h
 
 FORMS    += mainwindow.ui

@@ -33,11 +33,12 @@ struct position current_position;
 
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(parent),
-      leftMouseButtonMode(INACTIVE),
+
       xRot(0), yRot(0), zRot(0),
       xPos(0), yPos(0), zPos(0),
       xTrans(0), yTrans(0), zTrans(0),
       zoomFactor(1.0), zoomInc(0), defaultZoomFactor(1.0)
+
 {
 //    zoomfactor = 10;
 
@@ -45,6 +46,7 @@ GLWidget::GLWidget(QWidget *parent)
     yRot = 0.0f;
     zRot = 0.0f;
 
+//    leftMouseButtonMode = ROTATE;
 
     defaultZoomFactor = 1;
     zoomInc = defaultZoomFactor/1000;
@@ -210,6 +212,17 @@ void GLWidget::convertVrVl(int vr, int vl)
 
 void GLWidget::update()
 {
+    updateGL();
+}
+
+void GLWidget::on_addEncoderPulesVrVl(int32_t* encoders)
+{
+    for(int i = 0; i < 100; i = i + 2)
+    {
+        this->addPulsesVrVl(encoders[i+1], encoders[i]);
+//        qDebug() << encoders[i+1] << " " << encoders[1];
+    }
+
     updateGL();
 }
 

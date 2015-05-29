@@ -24,6 +24,8 @@ public slots:
     void on_drawPoints();
     void on_timerElapsed();
 
+    void readData();
+
 signals:
     void drawnow();
     void pointsadded();
@@ -38,10 +40,9 @@ private:
     float initialAngle;
     float x0, y0;
 
-    MyThread thread;
+    MyThread* thread;
 
     QSerialPort* serial;
-
 };
 
 #endif // MAINWINDOW_H
