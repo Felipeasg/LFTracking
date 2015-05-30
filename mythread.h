@@ -14,10 +14,18 @@ public:
     ~MyThread();
 
     void run();
-    QSerialPort* serialPort;
+
+    void serialOpen();
+    void serialClose();
+
+    QSerialPort *getSerialPort() const;
+    void setSerialPort(QSerialPort *value);
+
+    bool getFlatStop() const;
+    void setFlatStop(bool value);
 
 signals:
-    void dataDecoded(int32_t* encoders);
+    void dataDecoded(int* encoders);
 
 public slots:
     void serialReceived();
@@ -33,9 +41,12 @@ private:
 
     Buffer* inBuffer;
     char inBufferArray[65536];
-    int32_t encoders[200];
+    int encoders[200];
     DecodeState state;
 
+    QSerialPort* serialPort;
+
+    bool flatStop;
 
 };
 

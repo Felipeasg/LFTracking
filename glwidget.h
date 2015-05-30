@@ -19,19 +19,33 @@ public:
         PANNING
     };
 
+    enum DeadReckoningMethod
+    {
+        INTEGRAL,
+        SIMPLE
+    };
+
     explicit GLWidget(QWidget *parent = 0);
     ~GLWidget();
 
     void addXY(GLfloat x, GLfloat y);
     void addPulsesVrVl(int vr, int vl);
+    void addPulsesSrSl(int srPulses, int slPulses);
+    void resetDeadReckoning();
+    QSize sizeHint() const;
 
 
-    QList<int> vrList;
-    QList<int> vlList;
 
-    void stoptimer();
-    void starttimer();
+    float getWheelDiameter() const;
+    void setWheelDiameter(float value);
 
+    float getPulsesPerRevolution() const;
+    void setPulsesPerRevolution(float value);
+
+    float getAxleLength() const;
+    void setAxleLength(float value);
+
+    void setDeadReckoningMethod(const DeadReckoningMethod &value);
 
 signals:
     void xRotationChanged(const int angle) const;
@@ -42,7 +56,6 @@ signals:
     void zoomChanged(const float zoom);
 
 public slots:
-    void timerEvent(void);
 
     void setXRotation(int angle);
     void setYRotation(int angle);
@@ -53,21 +66,38 @@ public slots:
     void setLeftMouseButtonMode(const GLWidget::LeftMouseButtonMode mode);
     void update();
 
-    void on_addEncoderPulesVrVl(int32_t *encoders);
+    void addEncoderPulesVrVl(int *encoders);
 
 protected:
+    //opengl events
     void initializeGL();
     void paintGL();
     void resizeGL(int w, int h);
 
+    //mouse events
     void mousePressEvent(QMouseEvent *event);
     void mouseReleaseEvent(QMouseEvent*);
     void mouseMoveEvent(QMouseEvent *event);
     void wheelEvent(QWheelEvent *event);
 
 private:
+
+    //Struct to dead reckoning
+    struct position
+    {
+        float x;        /* meter */
+        float y;        /* meter */
+        float theta;    /* radian (counterclockwise from x-axis) */
+    };
+
+    struct position current_position;
+
+    float wheelDiameter;
+    float pulsesPerRevolution;
+    float axleLength;
+
     void draw(void);
-    void updateCursor();
+    void updateCursor(void);
     void normalizeAngle(int *angle);
     void convertVrVl(int vr, int vl);
 
@@ -108,6 +138,8 @@ private:
     float sin_current;
     float right_minus_left;
     float MUL_COUNT;
+
+    DeadReckoningMethod deadReckoningMethod;
 
 
 };

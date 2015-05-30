@@ -3,33 +3,6 @@
 #include <math.h>
 #include <QDebug>
 
-/* User defined constants */
-#define WHEEL_DIAMETER 0.032f
-#define PULSES_PER_REVOLUTION 14400.0f
-#define AXLE_LENGTH 0.083f
-
-/* Fixed constants */
-#define PI 3.14159
-
-/*********************/
-/* define structures */
-/*********************/
-
-struct position
-{
-    float x;        /* meter */
-    float y;        /* meter */
-    float theta;    /* radian (counterclockwise from x-axis) */
-};
-
-/********************/
-/* global variables */
-/********************/
-
-struct position current_position;
-//Qlist<int> listpoints;
-
-#define SCALE 1
 
 GLWidget::GLWidget(QWidget *parent)
     : QGLWidget(parent),
@@ -40,13 +13,16 @@ GLWidget::GLWidget(QWidget *parent)
       zoomFactor(1.0), zoomInc(0), defaultZoomFactor(1.0)
 
 {
-//    zoomfactor = 10;
+
+    leftMouseButtonMode = INACTIVE;
+
+    wheelDiameter = 0.032;
+    pulsesPerRevolution = 14400.0;
+    axleLength = 0.083;
 
     xRot = 0.0f;
     yRot = 0.0f;
     zRot = 0.0f;
-
-//    leftMouseButtonMode = ROTATE;
 
     defaultZoomFactor = 1;
     zoomInc = defaultZoomFactor/1000;
@@ -73,11 +49,8 @@ GLWidget::GLWidget(QWidget *parent)
     right_minus_left = 0;
     MUL_COUNT = 0;
 
-    MUL_COUNT  = (PI * WHEEL_DIAMETER) / PULSES_PER_REVOLUTION;
+    MUL_COUNT  = (M_PI * wheelDiameter) / pulsesPerRevolution;
 
-    connect(timer, SIGNAL(timeout()), this, SLOT(timerEvent()));
-
-//    timer->start(500);
 }
 
 GLWidget::~GLWidget()
@@ -94,11 +67,6 @@ void GLWidget::addXY(GLfloat x, GLfloat y)
 
     listPointsx.append(x);
     listPointsy.append(y);
-
-//    zoomfactor = qMax(qMax(x,y),zoomfactor);
-
-//    resizeGL(this->width(), this->height());
-//    updateGL();
 
 }
 
@@ -129,38 +97,81 @@ void GLWidget::addPulsesVrVl(int vr, int vl)
     else
     {
         /* Moving in an arc */
-        expr1 = (AXLE_LENGTH * (dist_right + dist_left)) / (2.0 * (dist_right - dist_left));
+        expr1 = (axleLength * (dist_right + dist_left)) / (2.0 * (dist_right - dist_left));
 
         right_minus_left = dist_right - dist_left;
 
-        current_position.x += expr1 * (sin(right_minus_left /  AXLE_LENGTH + current_position.theta) - sin_current);
+        current_position.x += expr1 * (sin(right_minus_left /  axleLength + current_position.theta) - sin_current);
 
-        current_position.y -= expr1 * (cos(right_minus_left / AXLE_LENGTH + current_position.theta) - cos_current);
+        current_position.y -= expr1 * (cos(right_minus_left / axleLength + current_position.theta) - cos_current);
 
         /* Calculate new orientation */
-        current_position.theta += right_minus_left / AXLE_LENGTH;
+        current_position.theta += right_minus_left / axleLength;
 
         /* Keep in the range -PI to +PI */
-        while(current_position.theta > PI)
-            current_position.theta -= (2.0*PI);
-        while(current_position.theta < -PI)
-            current_position.theta += (2.0*PI);
+        while(current_position.theta > M_PI)
+            current_position.theta -= (2.0*M_PI);
+        while(current_position.theta < -M_PI)
+            current_position.theta += (2.0*M_PI);
     }
 
-    listPointsx.append(current_position.x*SCALE);
-    listPointsy.append(current_position.y*SCALE);
+    listPointsx.append(current_position.x);
+    listPointsy.append(current_position.y);
 
 
-//    qDebug() << "x = " << current_position.x << "; y = " << current_position.y;
+    //    qDebug() << "x = " << current_position.x << "; y = " << current_position.y;
+}
+
+void GLWidget::addPulsesSrSl(int srPulses, int slPulses)
+{
+
+    float sr = (float)srPulses * MUL_COUNT;
+    float sl = (float)slPulses * MUL_COUNT;
+
+    float s = (sr + sl)/2;
+
+    current_position.theta = (sr - sl)/axleLength;
+
+    current_position.x = s*cos(current_position.theta);
+    current_position.y = s*sin(current_position.theta);
+
+    listPointsx.append(current_position.x);
+    listPointsy.append(current_position.y);
+
+}
+
+void GLWidget::resetDeadReckoning()
+{
+    wheelDiameter = 0.032;
+    pulsesPerRevolution = 14400.0;
+    axleLength = 0.083;
+
+    current_position.x = 0.0;
+    current_position.y = 0.0;
+    current_position.theta = 0.0;
+
+    listPointsx.clear();
+    listPointsy.clear();
+
+    updateGL();
+}
+
+QSize GLWidget::sizeHint() const
+{
+    return QSize(800,600);
 }
 
 void GLWidget::convertVrVl(int vr, int vl)
 {
 
+    if(abs(vr - vl) < 10)
+    {
+        vr = (vr + vl)/2;
+        vl = vr;
+    }
+
     left_count = vl;
     right_count = vr;
-
-
 
     left_ticks = left_count;
     right_ticks = right_count;
@@ -173,8 +184,9 @@ void GLWidget::convertVrVl(int vr, int vl)
     cos_current = cos(current_position.theta);
     sin_current = sin(current_position.theta);
 
-    if (abs(left_ticks - right_ticks) <= 30)
+    if (left_ticks == right_ticks)
     {
+
         /* Moving in a straight line */
         current_position.x += dist_left * cos_current;
         current_position.y += dist_left * sin_current;
@@ -182,65 +194,68 @@ void GLWidget::convertVrVl(int vr, int vl)
     else
     {
         /* Moving in an arc */
-        expr1 = AXLE_LENGTH * (dist_right + dist_left)
+        expr1 = axleLength * (dist_right + dist_left)
                 / 2.0 / (dist_right - dist_left);
 
         right_minus_left = dist_right - dist_left;
 
         current_position.x += expr1 * (sin(right_minus_left /
-                                           AXLE_LENGTH + current_position.theta) - sin_current);
+                                           axleLength + current_position.theta) - sin_current);
 
         current_position.y -= expr1 * (cos(right_minus_left /
-                                           AXLE_LENGTH + current_position.theta) - cos_current);
+                                           axleLength + current_position.theta) - cos_current);
 
         /* Calculate new orientation */
-        current_position.theta += right_minus_left / AXLE_LENGTH;
+        current_position.theta += right_minus_left / axleLength;
 
         /* Keep in the range -PI to +PI */
-        while(current_position.theta > PI)
-            current_position.theta -= (2.0*PI);
-        while(current_position.theta < -PI)
-            current_position.theta += (2.0*PI);
+        while(current_position.theta > M_PI)
+            current_position.theta -= (2.0*M_PI);
+        while(current_position.theta < -M_PI)
+            current_position.theta += (2.0*M_PI);
     }
 
-    listPointsx.append(current_position.x*SCALE);
-    listPointsy.append(current_position.y*SCALE);
+    listPointsx.append(current_position.x);
+    listPointsy.append(current_position.y);
 
 
 //    qDebug() << "x = " << current_position.x << "; y = " << current_position.y;
 }
+
+void GLWidget::setDeadReckoningMethod(const DeadReckoningMethod &value)
+{
+    deadReckoningMethod = value;
+}
+
+
+
 
 void GLWidget::update()
 {
     updateGL();
 }
 
-void GLWidget::on_addEncoderPulesVrVl(int32_t* encoders)
+void GLWidget::addEncoderPulesVrVl(int* encoders)
 {
-    for(int i = 0; i < 100; i = i + 2)
+    if(deadReckoningMethod == INTEGRAL)
     {
-        this->addPulsesVrVl(encoders[i+1], encoders[i]);
-//        qDebug() << encoders[i+1] << " " << encoders[1];
+        for(int i = 0; i < 100; i = i + 2)
+        {
+            this->addPulsesVrVl(encoders[i+1], encoders[i]);
+            //        qDebug() << encoders[i+1] << " " << encoders[1];
+        }
+    }
+    if(deadReckoningMethod == SIMPLE)
+    {
+        for(int i = 0; i < 100; i = i + 2)
+        {
+            this->addPulsesSrSl(encoders[i+1], encoders[i]);
+        }
     }
 
     updateGL();
 }
 
-void GLWidget::stoptimer()
-{
-    timer->stop();
-}
-
-void GLWidget::starttimer()
-{
-    timer->start();
-}
-
-void GLWidget::timerEvent()
-{
-//    xRot += 90;
-    updateGL();
-}
 
 void GLWidget::setXRotation(int angle)
 {
@@ -262,7 +277,6 @@ void GLWidget::setYRotation(int angle)
         yRot = angle;
         emit yRotationChanged(angle);
         updateGL();
-//        update();
     }
 }
 
@@ -274,7 +288,6 @@ void GLWidget::setZRotation(int angle)
         zRot = angle;
         emit zRotationChanged(angle);
         updateGL();
-//        update();
     }
 }
 
@@ -285,7 +298,6 @@ void GLWidget::setXTranslation(const float distance)
         xTrans = distance;
         emit xTranslationChanged(distance);
         updateGL();
-//        update();
     }
 }
 
@@ -296,7 +308,6 @@ void GLWidget::setYTranslation(const float distance)
         yTrans = distance;
         emit yTranslationChanged(distance);
         updateGL();
-//        update();
     }
 }
 
@@ -332,12 +343,10 @@ void GLWidget::initializeGL()
 
 void GLWidget::paintGL()
 {
-
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
 
-
-    // Adjust clipping box
+    // Adjust clipping box (zoom)
     if(width <= height)
     {
         glOrtho(-zoomFactor, zoomFactor, -zoomFactor*height/width,
@@ -348,8 +357,11 @@ void GLWidget::paintGL()
         glOrtho(-zoomFactor*width/height, zoomFactor*width/height,
                 -zoomFactor, zoomFactor, -zoomFactor*5000.0f, zoomFactor*5000.0f);
     }
+
+
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     glTranslated(-xTrans, -yTrans, -zTrans);
@@ -360,9 +372,9 @@ void GLWidget::paintGL()
 
     glTranslated(-xPos, -yPos, -zPos);
 
-
-
     draw();
+
+
 
 //    glFlush();
 }
@@ -476,11 +488,39 @@ void GLWidget::wheelEvent(QWheelEvent *event)
     setZoomLevel(zoomFactor - delta*zoomInc);
 }
 
+float GLWidget::getAxleLength() const
+{
+    return axleLength;
+}
+
+void GLWidget::setAxleLength(float value)
+{
+    axleLength = value;
+}
+
+float GLWidget::getPulsesPerRevolution() const
+{
+    return pulsesPerRevolution;
+}
+
+void GLWidget::setPulsesPerRevolution(float value)
+{
+    pulsesPerRevolution = value;
+}
+
+float GLWidget::getWheelDiameter() const
+{
+    return wheelDiameter;
+}
+
+void GLWidget::setWheelDiameter(float value)
+{
+    wheelDiameter = value;
+}
+
+
 void GLWidget::draw()
 {
-
-
-
     qglColor(Qt::red);
 
     glPointSize(2.0);
@@ -491,49 +531,9 @@ void GLWidget::draw()
     }
     glEnd();
 
-//    qglColor(Qt::red);
-//    glBegin(GL_QUADS);
-//        glNormal3f(0,0,-1);
-//        glVertex3f(-1,-1,0);
-//        glVertex3f(-1,1,0);
-//        glVertex3f(1,1,0);
-//        glVertex3f(1,-1,0);
-//    glEnd();
-
-//    qglColor(Qt::green);
-//    glBegin(GL_TRIANGLES);
-//        glNormal3f(0,-1,0.707);
-//        glVertex3f(-1,-1,0);
-//        glVertex3f(1,-1,0);
-//        glVertex3f(0,0,1.2);
-//    glEnd();
-
-//    qglColor(Qt::blue);
-//    glBegin(GL_TRIANGLES);
-//        glNormal3f(1,0, 0.707);
-//        glVertex3f(1,-1,0);
-//        glVertex3f(1,1,0);
-//        glVertex3f(0,0,1.2);
-//    glEnd();
-
-//    qglColor(Qt::white);
-//    glBegin(GL_TRIANGLES);
-//        glNormal3f(0,1,0.707);
-//        glVertex3f(1,1,0);
-//        glVertex3f(-1,1,0);
-//        glVertex3f(0,0,1.2);
-//    glEnd();
-
-//    qglColor(Qt::yellow);
-//    glBegin(GL_TRIANGLES);
-//        glNormal3f(-1,0,0.707);
-//        glVertex3f(-1,1,0);
-//        glVertex3f(-1,-1,0);
-//        glVertex3f(0,0,1.2);
-    //    glEnd();
 }
 
-void GLWidget::updateCursor()
+void GLWidget::updateCursor(void)
 {
     QCursor cursor = this->cursor();
     cursor.setShape(Qt::ArrowCursor);

@@ -1,31 +1,34 @@
 #include "mythread.h"
 
+#include "serialportsettingmodel.h"
+
 MyThread::MyThread(QObject *parent):
     QThread(parent)
 {
     inBuffer = new Buffer(inBufferArray, 65536);
-
     serialPort = new QSerialPort(this);
 
-    //https://www.youtube.com/watch?v=UD78xyKbrfk
-    serialPort->setPortName("ttyUSB0");
-    serialPort->setBaudRate(QSerialPort::Baud115200);
-    serialPort->setDataBits(QSerialPort::Data8);
-    serialPort->setParity(QSerialPort::NoParity);
-    serialPort->setStopBits(QSerialPort::OneStop);
-    serialPort->setFlowControl(QSerialPort::NoFlowControl);
 
-    if(serialPort->open(QIODevice::ReadWrite))
-    {
-        qDebug() << "Opened";
-    }
-    else
-    {
-        qDebug() << "Could not open";
-    }
+//    serialPort = new QSerialPort(this);
+
+//    serialPort->setPortName("ttyUSB0");
+//    serialPort->setBaudRate(QSerialPort::Baud115200);
+//    serialPort->setDataBits(QSerialPort::Data8);
+//    serialPort->setParity(QSerialPort::NoParity);
+//    serialPort->setStopBits(QSerialPort::OneStop);
+//    serialPort->setFlowControl(QSerialPort::NoFlowControl);
+
+//    if(serialPort->open(QIODevice::ReadWrite))
+//    {
+//        qDebug() << "Opened";
+//    }
+//    else
+//    {
+//        qDebug() << "Could not open";
+//    }
 
 
-    connect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
+//    connect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
 }
 
 MyThread::~MyThread()
@@ -41,7 +44,7 @@ void MyThread::run()
     static int count = 0;
 #endif
 
-    while(1)
+    while(flatStop == false)
     {
         switch (state) {
 
@@ -49,32 +52,31 @@ void MyThread::run()
 
             if(inBuffer->getLength() > 4)
             {
-                inBuffer->getN(preamble,0, 4);
-                if((unsigned char)preamble[0] == 0xaa &&
-                        (unsigned char)preamble[1] == 0xaa &&
-                        (unsigned char)preamble[2] == 0xaa &&
-                        (unsigned char)preamble[3] == 0xaa)
+                inBuffer->getByte(preamble);
+                if((unsigned char)preamble[0] == 0xaa)
                 {
-                    state = PAYLOAD;
+                    inBuffer->getByte(preamble);
+                    if((unsigned char)preamble[0] == 0xaa)
+                    {
+                        inBuffer->getByte(preamble);
+                        if((unsigned char)preamble[0] == 0xaa)
+                        {
+                            inBuffer->getByte(preamble);
+                            if((unsigned char)preamble[0] == 0xaa)
+                            {
+                                state = PAYLOAD;
+                            }
+                        }
+                    }
                 }
-
-//                if((unsigned char)preamble[0] == 0xaa)
+//                inBuffer->getN(preamble,0, 4);
+//                if((unsigned char)preamble[0] == 0xaa &&
+//                        (unsigned char)preamble[1] == 0xaa &&
+//                        (unsigned char)preamble[2] == 0xaa &&
+//                        (unsigned char)preamble[3] == 0xaa)
 //                {
-//                    inBuffer->getByte(preamble);
-//                    if((unsigned char)preamble[0] == 0xaa)
-//                    {
-//                        inBuffer->getByte(preamble);
-//                        if((unsigned char)preamble[0] == 0xaa)
-//                        {
-//                            inBuffer->getByte(preamble);
-//                            if((unsigned char)preamble[0] == 0xaa)
-//                            {
-//                                state = PAYLOAD;
-//                            }
-//                        }
-//                    }
+//                    state = PAYLOAD;
 //                }
-
             }
 
             break;
@@ -109,16 +111,61 @@ void MyThread::run()
 
 }
 
+void MyThread::serialOpen()
+{    
+    serialPort->setPortName(SerialPortSettingModel::getInstance()->getPortName());
+    qDebug() << serialPort->portName();
+    serialPort->setBaudRate(SerialPortSettingModel::getInstance()->getBaudRate());
+    qDebug() << serialPort->baudRate();
+    serialPort->setDataBits(QSerialPort::Data8);
+    serialPort->setParity(QSerialPort::NoParity);
+    serialPort->setStopBits(QSerialPort::OneStop);
+    serialPort->setFlowControl(QSerialPort::NoFlowControl);
+
+    connect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
+
+    if(serialPort->open(QIODevice::ReadWrite))
+    {
+        qDebug() << "Opened";
+    }
+    else
+    {
+        qDebug() << "Could not open";
+    }
+}
+
+void MyThread::serialClose()
+{
+    serialPort->close();
+
+    disconnect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
+}
+
 void MyThread::serialReceived()
 {
     QByteArray serialData = serialPort->readAll();
 
     inBuffer->putN(serialData.data(), 0, serialData.length());
 
-
-//    qDebug() << "Data";
-//    foreach (char data, serialData) {
-//        qDebug() << (int)data;
-//    }
 }
+bool MyThread::getFlatStop() const
+{
+    return flatStop;
+}
+
+void MyThread::setFlatStop(bool value)
+{
+    flatStop = value;
+}
+
+QSerialPort *MyThread::getSerialPort() const
+{
+    return serialPort;
+}
+
+void MyThread::setSerialPort(QSerialPort *value)
+{
+    serialPort = value;
+}
+
 

@@ -16,11 +16,18 @@ SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
     mythread.cpp \
-    buffer.cpp
+    buffer.cpp \
+    serialportsettingsdialog.cpp \
+    serialportsettingsconfigset.cpp \
+    serialportsettingmodel.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
     mythread.h \
-    buffer.h
+    buffer.h \
+    serialportsettingsdialog.h \
+    serialportsettingsconfigset.h \
+    serialportsettingmodel.h
 
-FORMS    += mainwindow.ui
+FORMS    += mainwindow.ui \
+    serialportsettingsdialog.ui

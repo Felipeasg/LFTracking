@@ -17,32 +17,38 @@ public:
     explicit MainWindow(QWidget *parent = 0);
     ~MainWindow();
 
+    QSize sizeHint() const;
+
 public slots:
 
-    void serialReceived();
-    void on_MainWindow_destroyed();
-    void on_drawPoints();
-    void on_timerElapsed();
-
-    void readData();
-
 signals:
-    void drawnow();
-    void pointsadded();
+
+private slots:
+    void on_wheelDiameterLineEdit_editingFinished();
+
+    void on_pulsesPerRevLineEdit_editingFinished();
+
+
+
+    void on_axleLengthLineEdit_editingFinished();
+
+    void on_actionSerialPort_triggered();
+
+    void on_connectPushButton_clicked();
+
+    void on_disconnectPushButton_clicked();
+
+    void on_integraMethodRadioButton_toggled(bool checked);
+
+    void on_simplerMethodRadioButton_clicked(bool checked);
+
+    void on_actionNew_triggered();
+
 private:
     Ui::MainWindow *ui;
 
-    QTimer* timer;
-
-    float b;
-    float vr, vl;
-    float t;
-    float initialAngle;
-    float x0, y0;
-
     MyThread* thread;
 
-    QSerialPort* serial;
 };
 
 #endif // MAINWINDOW_H
