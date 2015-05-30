@@ -109,6 +109,10 @@ void MyThread::run()
         }
     }
 
+    while(inBuffer->getLength() > 0)
+    {
+        inBuffer->getByte(preamble);
+    }
 }
 
 void MyThread::serialOpen()

@@ -113,4 +113,8 @@ void MainWindow::on_simplerMethodRadioButton_clicked(bool checked)
 void MainWindow::on_actionNew_triggered()
 {
     ui->glWidget->resetDeadReckoning();
+
+    ui->wheelDiameterLineEdit->setText(QString::number(ui->glWidget->getWheelDiameter()));
+    ui->pulsesPerRevLineEdit->setText(QString::number(ui->glWidget->getPulsesPerRevolution()));
+    ui->axleLengthLabel->setText(QString::number(ui->glWidget->getAxleLength()));
 }
