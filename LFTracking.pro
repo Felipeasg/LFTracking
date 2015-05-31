@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui opengl serialport
+QT       += core gui opengl serialport printsupport
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -19,7 +19,8 @@ SOURCES += main.cpp\
     buffer.cpp \
     serialportsettingsdialog.cpp \
     serialportsettingsconfigset.cpp \
-    serialportsettingmodel.cpp
+    serialportsettingmodel.cpp \
+    qcustomplot.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -27,7 +28,8 @@ HEADERS  += mainwindow.h \
     buffer.h \
     serialportsettingsdialog.h \
     serialportsettingsconfigset.h \
-    serialportsettingmodel.h
+    serialportsettingmodel.h \
+    qcustomplot.h
 
 FORMS    += mainwindow.ui \
     serialportsettingsdialog.ui

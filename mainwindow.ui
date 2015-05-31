@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>700</width>
-    <height>563</height>
+    <width>859</width>
+    <height>573</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,7 +20,16 @@
       <property name="orientation">
        <enum>Qt::Vertical</enum>
       </property>
-      <widget class="GLWidget" name="glWidget" native="true"/>
+      <widget class="QWidget" name="">
+       <layout class="QHBoxLayout" name="horizontalLayout">
+        <item>
+         <widget class="GLWidget" name="glWidget" native="true"/>
+        </item>
+        <item>
+         <widget class="QCustomPlot" name="plotWidget" native="true"/>
+        </item>
+       </layout>
+      </widget>
       <widget class="QTabWidget" name="tabWidget">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -36,11 +45,11 @@
        </property>
        <widget class="QWidget" name="outputTab">
         <attribute name="title">
-         <string>Output</string>
+         <string>Console</string>
         </attribute>
-        <layout class="QGridLayout" name="gridLayout_2">
-         <item row="0" column="0">
-          <widget class="QTextEdit" name="textEdit">
+        <layout class="QVBoxLayout" name="verticalLayout_2">
+         <item>
+          <widget class="QTextEdit" name="consoleTextEdit">
            <property name="sizePolicy">
             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
              <horstretch>0</horstretch>
@@ -66,8 +75,8 @@
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>700</width>
-     <height>19</height>
+     <width>859</width>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -342,7 +351,7 @@
      <item row="2" column="0">
       <widget class="QGroupBox" name="groupBox_4">
        <property name="title">
-        <string>Method</string>
+        <string>Dead Reckoning Method</string>
        </property>
        <layout class="QVBoxLayout" name="verticalLayout">
         <item>
@@ -362,7 +371,7 @@
        </layout>
       </widget>
      </item>
-     <item row="3" column="0">
+     <item row="4" column="0">
       <widget class="QGroupBox" name="groupBox_3">
        <property name="title">
         <string>Connection</string>
@@ -385,7 +394,7 @@
        </layout>
       </widget>
      </item>
-     <item row="4" column="0">
+     <item row="5" column="0">
       <spacer name="verticalSpacer">
        <property name="orientation">
         <enum>Qt::Vertical</enum>
@@ -397,6 +406,29 @@
         </size>
        </property>
       </spacer>
+     </item>
+     <item row="3" column="0">
+      <widget class="QGroupBox" name="groupBox_5">
+       <property name="title">
+        <string>View settings</string>
+       </property>
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="QRadioButton" name="deadReckoningRadioButton">
+          <property name="text">
+           <string>Dead reckoning</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QRadioButton" name="plotRadioButton">
+          <property name="text">
+           <string>Plot</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </widget>
      </item>
     </layout>
    </widget>
@@ -448,6 +480,12 @@
    <class>GLWidget</class>
    <extends>QWidget</extends>
    <header>glwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>QCustomPlot</class>
+   <extends>QWidget</extends>
+   <header>qcustomplot.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

@@ -23,6 +23,8 @@ public slots:
 
 signals:
 
+    void dataDecoded(int* decodedData);
+
 private slots:
     void on_wheelDiameterLineEdit_editingFinished();
 
@@ -44,10 +46,36 @@ private slots:
 
     void on_actionNew_triggered();
 
+    void serialReceived();
+
+
+
+    void on_deadReckoningRadioButton_toggled(bool checked);
+
+    void on_plotRadioButton_toggled(bool checked);
+
+    void plotVariables(int* variables);
+
 private:
+
+    int decode();
+    bool processPreamble();
+    bool processData();
+
     Ui::MainWindow *ui;
 
     MyThread* thread;
+
+    QSerialPort* serialPort;
+
+    Buffer* inBuffer;
+    char inBufferArray[65536];
+
+    int decoderState;
+
+    int payloadDecoded[200];
+
+    int viewSetting;
 
 };
 
