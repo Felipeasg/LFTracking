@@ -33,7 +33,8 @@ public:
     void addPulsesSrSl(int srPulses, int slPulses);
     void resetDeadReckoning();
     QSize sizeHint() const;
-
+    void clearEncoderLists();
+    int encoderListCount();
 
 
     float getWheelDiameter() const;
@@ -46,6 +47,12 @@ public:
     void setAxleLength(float value);
 
     void setDeadReckoningMethod(const DeadReckoningMethod &value);
+
+    QList<GLfloat> getEncoderRList() const;
+    void setEncoderRList(const QList<GLfloat> &value);
+
+    QList<GLfloat> getEncoderLList() const;
+    void setEncoderLList(const QList<GLfloat> &value);
 
 signals:
     void xRotationChanged(const int angle) const;
@@ -126,6 +133,9 @@ private:
 
     QList<GLfloat> listPointsx;
     QList<GLfloat> listPointsy;
+
+    QList<GLfloat> encoderRList;
+    QList<GLfloat> encoderLList;
 
     int left_count;
     int right_count;

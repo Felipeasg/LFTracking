@@ -2,8 +2,10 @@
 #define MAINWINDOW_H
 
 #include <QMainWindow>
+#include <QSerialPort>
 
-#include "mythread.h"
+#include "buffer.h"
+#include "receivedata.h"
 
 namespace Ui {
 class MainWindow;
@@ -23,8 +25,6 @@ public slots:
 
 signals:
 
-    void dataDecoded(int* decodedData);
-
 private slots:
     void on_wheelDiameterLineEdit_editingFinished();
 
@@ -33,8 +33,6 @@ private slots:
 
 
     void on_axleLengthLineEdit_editingFinished();
-
-    void on_actionSerialPort_triggered();
 
     void on_connectPushButton_clicked();
 
@@ -46,36 +44,42 @@ private slots:
 
     void on_actionNew_triggered();
 
-    void serialReceived();
-
-
-
     void on_deadReckoningRadioButton_toggled(bool checked);
 
     void on_plotRadioButton_toggled(bool checked);
 
     void plotVariables(int* variables);
 
+    void on_actionClear_triggered();
+
+
+
+    void on_actionShow_points_triggered(bool checked);
+
+    void on_actionNew_tracking_triggered();
+
+    void on_actionConnect_triggered();
+
+    void on_actionDisconnect_triggered();
+
+    void on_actionSettings_triggered();
+
 private:
 
-    int decode();
-    bool processPreamble();
-    bool processData();
+
 
     Ui::MainWindow *ui;
 
-    MyThread* thread;
-
-    QSerialPort* serialPort;
-
-    Buffer* inBuffer;
-    char inBufferArray[65536];
-
-    int decoderState;
-
-    int payloadDecoded[200];
-
     int viewSetting;
+
+    ReceiveData* receiveData;
+
+    bool showPointsOnGraph;
+
+    QList<int> encoderRList;
+    QList<int> encoderLList;
+
+    int timeElapsed;
 
 };
 

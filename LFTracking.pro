@@ -15,21 +15,24 @@ TEMPLATE = app
 SOURCES += main.cpp\
         mainwindow.cpp \
     glwidget.cpp \
-    mythread.cpp \
     buffer.cpp \
     serialportsettingsdialog.cpp \
     serialportsettingsconfigset.cpp \
     serialportsettingmodel.cpp \
-    qcustomplot.cpp
+    qcustomplot.cpp \
+    receivedata.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
-    mythread.h \
     buffer.h \
     serialportsettingsdialog.h \
     serialportsettingsconfigset.h \
     serialportsettingmodel.h \
-    qcustomplot.h
+    qcustomplot.h \
+    receivedata.h
 
 FORMS    += mainwindow.ui \
     serialportsettingsdialog.ui
+
+RESOURCES += \
+    res.qrc

@@ -161,6 +161,25 @@ QSize GLWidget::sizeHint() const
     return QSize(800,600);
 }
 
+
+void GLWidget::clearEncoderLists()
+{
+    encoderLList.clear();
+    encoderRList.clear();
+}
+
+int GLWidget::encoderListCount()
+{
+    int result = 0;
+    if(encoderLList.count() > 0)
+    {
+        result = encoderLList.count();
+    }
+
+
+    return result;
+}
+
 void GLWidget::convertVrVl(int vr, int vl)
 {
 
@@ -221,6 +240,26 @@ void GLWidget::convertVrVl(int vr, int vl)
 
 //    qDebug() << "x = " << current_position.x << "; y = " << current_position.y;
 }
+QList<GLfloat> GLWidget::getEncoderLList() const
+{
+    return encoderLList;
+}
+
+void GLWidget::setEncoderLList(const QList<GLfloat> &value)
+{
+    encoderLList = value;
+}
+
+QList<GLfloat> GLWidget::getEncoderRList() const
+{
+    return encoderRList;
+}
+
+void GLWidget::setEncoderRList(const QList<GLfloat> &value)
+{
+    encoderRList = value;
+}
+
 
 void GLWidget::setDeadReckoningMethod(const DeadReckoningMethod &value)
 {
@@ -239,16 +278,20 @@ void GLWidget::addEncoderPulesVrVl(int* encoders)
 {
     if(deadReckoningMethod == INTEGRAL)
     {
-        for(int i = 0; i < 100; i = i + 2)
+        for(int i = 0; i < 200; i = i + 2)
         {
+            this->encoderRList.append(encoders[i+1]);
+            this->encoderLList.append(encoders[i]);
             this->addPulsesVrVl(encoders[i+1], encoders[i]);
             //        qDebug() << encoders[i+1] << " " << encoders[1];
         }
     }
     if(deadReckoningMethod == SIMPLE)
     {
-        for(int i = 0; i < 100; i = i + 2)
+        for(int i = 0; i < 200; i = i + 2)
         {
+            this->encoderRList.append(encoders[i+1]);
+            this->encoderLList.append(encoders[i]);
             this->addPulsesSrSl(encoders[i+1], encoders[i]);
         }
     }

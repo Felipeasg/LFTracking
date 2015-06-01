@@ -12,19 +12,6 @@
 
 #include <serialportsettingmodel.h>
 
-#define CODEC_NEED_DATA 1
-#define CODEC_OK        4
-#define CODEC_SYNC      2
-#define CODEC_PAYLOAD   3
-
-#define PREAMBLE_SIZE   4 //in bytes
-#define PAYLOAD_SIZE    800 //in bytes
-
-#define PREAMBLE_1  0xAA
-#define PREAMBLE_2  0xAA
-#define PREAMBLE_3  0xAA
-#define PREAMBLE_4  0xAA
-
 #define DEAD_RECKONING 0
 #define PLOT           1
 
@@ -36,19 +23,14 @@ MainWindow::MainWindow(QWidget *parent) :
 
     this->resize(1200, 600);
 
-    thread = new MyThread(this);
-
-    serialPort = new QSerialPort(this);
-
-    inBuffer = new Buffer(inBufferArray, 65536);
-
-
-    this->decoderState = CODEC_SYNC;
+    receiveData =  new ReceiveData(this);
 
     ui->connectPushButton->setEnabled(true);
     ui->disconnectPushButton->setEnabled(false);
+    ui->actionConnect->setEnabled(true);
+    ui->actionDisconnect->setEnabled(false);
 
-
+    timeElapsed = 0;
     ui->integraMethodRadioButton->setChecked(true);
     ui->deadReckoningRadioButton->setChecked(true);
 
@@ -58,9 +40,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->plotWidget->resize(500,300);
 
 
+    this->showPointsOnGraph = false;
     ui->plotWidget->addGraph(); // blue line
     ui->plotWidget->graph(0)->setPen(QPen(Qt::blue));
-    ui->plotWidget->graph(0)->setBrush(QBrush(QColor(240, 255, 200)));
+//    ui->plotWidget->graph(0)->setBrush(QBrush(QColor(240, 255, 200)));
     ui->plotWidget->graph(0)->setAntialiasedFill(false);
     ui->plotWidget->addGraph(); // red line
     ui->plotWidget->graph(1)->setPen(QPen(Qt::red));
@@ -77,13 +60,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->plotWidget->xAxis->setRange(0, 30, Qt::AlignLeft);
 
-//    ui->plotWidget->xAxis->setTickLabelType(QCPAxis::ltDateTime);
-//    ui->plotWidget->xAxis->setDateTimeFormat("hh:mm:ss");
-//    ui->plotWidget->xAxis->setAutoTickStep(false);
-//    ui->plotWidget->xAxis->setTickStep(2);
-//    ui->plotWidget->axisRect()->setupFullAxesBox();
-
-    // Note: we could have also just called customPlot->rescaleAxes(); instead
     // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
     ui->plotWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
@@ -123,80 +99,40 @@ void MainWindow::on_axleLengthLineEdit_editingFinished()
     ui->glWidget->setAxleLength(axleLength);
 }
 
-void MainWindow::on_actionSerialPort_triggered()
-{
-    SerialPortSettingsDialog* dialog = new SerialPortSettingsDialog(this);
-
-    dialog->setModal(true);
-
-    dialog->exec();
-}
-
 void MainWindow::on_connectPushButton_clicked()
 {
-    serialPort->setPortName(SerialPortSettingModel::getInstance()->getPortName());
-    qDebug() << serialPort->portName();
-    serialPort->setBaudRate(SerialPortSettingModel::getInstance()->getBaudRate());
-    qDebug() << serialPort->baudRate();
-    serialPort->setDataBits(QSerialPort::Data8);
-    serialPort->setParity(QSerialPort::NoParity);
-    serialPort->setStopBits(QSerialPort::OneStop);
-    serialPort->setFlowControl(QSerialPort::NoFlowControl);
 
-
-
-    if(serialPort->open(QIODevice::ReadWrite))
-    {
-        connect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
-
+    if(receiveData->serialPortConnect())
+    {        
         qDebug() << "Opened";
 
         ui->connectPushButton->setEnabled(false);
+        ui->actionConnect->setEnabled(false);
         ui->disconnectPushButton->setEnabled(true);
+        ui->actionDisconnect->setEnabled(false);
 
-        ui->consoleTextEdit->append("Serial port " + serialPort->portName() + " is open!");
-        ui->consoleTextEdit->append("Baudrate: " + QString::number(serialPort->baudRate()));
+
+        ui->consoleTextEdit->append("Serial port " + SerialPortSettingModel::getInstance()->getPortName() + " is open!");
+        ui->consoleTextEdit->append("Baudrate: " + QString::number(SerialPortSettingModel::getInstance()->getBaudRate()));
 
     }
     else
     {
-        qDebug() << "Could not open";
 
-        ui->consoleTextEdit->append("Serial port " + serialPort->portName() + " could not be opened");
+
+        ui->consoleTextEdit->append("Serial port " + SerialPortSettingModel::getInstance()->getPortName() + " could not be opened");
     }
-
-
-#if 0
-    thread->serialOpen();
-
-    connect(thread, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
-
-    thread->setFlatStop(false);
-    thread->start();
-
-    ui->connectPushButton->setEnabled(false);
-    ui->disconnectPushButton->setEnabled(true);
-#endif
 }
 
 void MainWindow::on_disconnectPushButton_clicked()
 {
-    serialPort->close();
-
-    disconnect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
-
+    receiveData->serialPortDisconnect();
     ui->connectPushButton->setEnabled(true);
+    ui->actionConnect->setEnabled(true);
     ui->disconnectPushButton->setEnabled(false);
+    ui->actionDisconnect->setEnabled(false);
 
-    ui->consoleTextEdit->append("Serial port " + serialPort->portName() + " is close!");
-#if 0
-    thread->setFlatStop(true);
-
-    thread->serialClose();
-
-    ui->connectPushButton->setEnabled(true);
-    ui->disconnectPushButton->setEnabled(false);
-#endif
+    ui->consoleTextEdit->append("Serial port " + SerialPortSettingModel::getInstance()->getPortName() + " is close!");
 }
 
 void MainWindow::on_integraMethodRadioButton_toggled(bool checked)
@@ -217,110 +153,11 @@ void MainWindow::on_simplerMethodRadioButton_clicked(bool checked)
 
 void MainWindow::on_actionNew_triggered()
 {
-    ui->glWidget->resetDeadReckoning();
+
 
     ui->wheelDiameterLineEdit->setText(QString::number(ui->glWidget->getWheelDiameter()));
     ui->pulsesPerRevLineEdit->setText(QString::number(ui->glWidget->getPulsesPerRevolution()));
     ui->axleLengthLabel->setText(QString::number(ui->glWidget->getAxleLength()));
-}
-
-void MainWindow::serialReceived()
-{
-    int result;
-    QByteArray serialData = serialPort->readAll();
-    inBuffer->putN(serialData.data(), 0, serialData.length());
-
-    do
-    {
-        result = this->decode();
-    }while(result != CODEC_NEED_DATA);
-}
-
-int MainWindow::decode()
-{
-    switch (this->decoderState) {
-    case CODEC_SYNC:
-
-        if(inBuffer->getLength() < PREAMBLE_SIZE)
-        {
-            return CODEC_NEED_DATA;
-        }
-
-        if(processPreamble())
-        {
-            this->decoderState = CODEC_PAYLOAD;
-
-            if(inBuffer->getLength() < PAYLOAD_SIZE)
-            {
-                return CODEC_NEED_DATA;
-            }
-            else
-            {
-                this->decoderState = CODEC_SYNC;
-                processData();
-            }
-        }
-
-        break;
-
-    case CODEC_PAYLOAD:
-
-        if(inBuffer->getLength() < PAYLOAD_SIZE)
-        {
-            return CODEC_NEED_DATA;
-        }
-        else
-        {
-            this->decoderState = CODEC_SYNC;
-            processData();
-        }
-        break;
-
-    default:
-        break;
-    }
-
-    return CODEC_OK;
-}
-
-bool MainWindow::processPreamble()
-{
-    char temp_data = 0;
-    bool bresult = false;
-    inBuffer->getByte(&temp_data);
-
-    if((unsigned char)temp_data == PREAMBLE_1)
-    {
-        inBuffer->getByte(&temp_data);
-
-        if((unsigned char)temp_data == PREAMBLE_2)
-        {
-            inBuffer->getByte(&temp_data);
-
-            if((unsigned char)temp_data == PREAMBLE_3)
-            {
-                inBuffer->getByte(&temp_data);
-
-                if((unsigned char)temp_data == PREAMBLE_3)
-                {
-                    bresult = true;
-                }
-            }
-        }
-    }
-
-    return bresult;
-}
-
-bool MainWindow::processData()
-{
-//    static int i = 0;
-    inBuffer->getN((char *)payloadDecoded, 0, PAYLOAD_SIZE);
-
-//    qDebug() << "received - " << i;
-//    i++;
-    emit dataDecoded(payloadDecoded);
-    return true;
 }
 
 void MainWindow::on_deadReckoningRadioButton_toggled(bool checked)
@@ -332,8 +169,20 @@ void MainWindow::on_deadReckoningRadioButton_toggled(bool checked)
         ui->plotWidget->hide();
         ui->glWidget->show();
 
-        connect(this, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
-        disconnect(this, SIGNAL(dataDecoded(int*)), this, SLOT(plotVariables(int*)));
+        if(encoderLList.count() > 0 && encoderRList.count() > 0)
+        {
+            ui->glWidget->resetDeadReckoning();
+
+            int count = encoderLList.count();
+            for(int i = 0; i < count; i++)
+            {
+                ui->glWidget->addPulsesVrVl(encoderRList[i], encoderLList[i]);
+            }
+
+            ui->glWidget->update();
+        }
+        connect(receiveData, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
+        disconnect(receiveData, SIGNAL(dataDecoded(int*)), this, SLOT(plotVariables(int*)));
     }
 }
 
@@ -346,34 +195,73 @@ void MainWindow::on_plotRadioButton_toggled(bool checked)
         ui->plotWidget->show();
         ui->glWidget->hide();
 
-        connect(this, SIGNAL(dataDecoded(int*)), this, SLOT(plotVariables(int*)));
-        disconnect(this, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
+        if(ui->glWidget->encoderListCount() > 0)
+        {
+            int count = ui->glWidget->encoderListCount();
+            int key = 0;
+            encoderLList.clear();
+            encoderRList.clear();
+            for(int i = 0; i < count; i++)
+            {
+                //encoderLList.append(ui->glWidget->getEncoderLList()[i]);
+                //encoderRList.append(ui->glWidget->getEncoderRList()[i]);
+                double value0 = (double)ui->glWidget->getEncoderRList()[i];
+                double value1 = (double)ui->glWidget->getEncoderLList()[i];
+
+                // add data to lines:
+                  ui->plotWidget->graph(0)->addData(key, value0);
+                  ui->plotWidget->graph(1)->addData(key, value1);
+
+                  //ui->plotWidget->graph(0)->rescaleValueAxis();
+                  //ui->plotWidget->graph(1)->rescaleValueAxis(true);
+
+                  if(this->showPointsOnGraph)
+                  {
+                      ui->plotWidget->graph(2)->addData(key, value0);
+                      //          ui->plotWidget->graph(3)->clearData();
+                      ui->plotWidget->graph(3)->addData(key, value1);
+                  }
+
+
+                  key++;
+            }
+
+            ui->plotWidget->xAxis->setRange(0, key+10);
+
+            ui->plotWidget->replot();
+        }
+
+        connect(receiveData, SIGNAL(dataDecoded(int*)), this, SLOT(plotVariables(int*)));
+        disconnect(receiveData, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
     }
 }
 
 void MainWindow::plotVariables(int *variables)
 {
-//    double key = QDateTime::currentDateTime().toMSecsSinceEpoch()/1000.0;
-    static int key = 0;
 
 //    static double lastPointKey = 0;
 
-    for(int i = 0; i < 100; i = i + 2)
+    for(int i = 0; i < 200; i = i + 2)
     {
-        double value0 = (double)variables[i+1]; //qSin(key*1.6+qCos(key*1.7)*2)*10 + qSin(key*1.2+0.56)*20 + 26;
-        double value1 = (double)variables[i]; //qSin(key*1.3+qCos(key*1.2)*1.2)*7 + qSin(key*0.9+0.26)*24 + 26;
+        encoderLList.append(variables[i+1]);
+        encoderRList.append(variables[i]);
+        double value0 = (double)variables[i+1];
+        double value1 = (double)variables[i];
 
         // add data to lines:
-          ui->plotWidget->graph(0)->addData(key, value0);
-          ui->plotWidget->graph(1)->addData(key, value1);
+          ui->plotWidget->graph(0)->addData(timeElapsed, value0);
+          ui->plotWidget->graph(1)->addData(timeElapsed, value1);
 
           ui->plotWidget->graph(0)->rescaleValueAxis();
           ui->plotWidget->graph(1)->rescaleValueAxis(true);
 //          // set data of dots:
 //          ui->plotWidget->graph(2)->clearData();
-//          ui->plotWidget->graph(2)->addData(key, value0);
-//          ui->plotWidget->graph(3)->clearData();
-//          ui->plotWidget->graph(3)->addData(key, value1);
+          if(this->showPointsOnGraph)
+          {
+              ui->plotWidget->graph(2)->addData(timeElapsed, value0);
+              //          ui->plotWidget->graph(3)->clearData();
+              ui->plotWidget->graph(3)->addData(timeElapsed, value1);
+          }
 //          // remove data of lines that's outside visible range:
 //          ui->plotWidget->graph(0)->removeDataBefore(key-8);
 //          ui->plotWidget->graph(1)->removeDataBefore(key-8);
@@ -382,13 +270,83 @@ void MainWindow::plotVariables(int *variables)
 //          ui->plotWidget->graph(1)->rescaleValueAxis(true);
 //          lastPointKey = key;
 
-          key++;
+          timeElapsed++;
     }
 
-    ui->plotWidget->xAxis->setRange(0, key+10);
+    ui->plotWidget->xAxis->setRange(0, timeElapsed+10);
     // make key axis range scroll with the data (at a constant range size of 8):
 //    ui->plotWidget->xAxis->setRange(0, 30, Qt::AlignRight);
 //    ui->plotWidget->xAxis->setRange(0, 8 + key, Qt::AlignLeft);
     ui->plotWidget->replot();
 
+}
+
+void MainWindow::on_actionClear_triggered()
+{
+    ui->plotWidget->graph(0)->clearData();
+    ui->plotWidget->graph(1)->clearData();
+    ui->plotWidget->graph(2)->clearData();
+    ui->plotWidget->graph(3)->clearData();
+
+    this->encoderLList.clear();
+    this->encoderRList.clear();
+
+    timeElapsed = 0;
+
+    ui->plotWidget->xAxis->setRange(0, 30, Qt::AlignLeft);
+
+    ui->plotWidget->replot();
+}
+
+
+
+void MainWindow::on_actionShow_points_triggered(bool checked)
+{
+    this->showPointsOnGraph = checked;
+}
+
+void MainWindow::on_actionNew_tracking_triggered()
+{
+    ui->glWidget->resetDeadReckoning();
+}
+
+void MainWindow::on_actionConnect_triggered()
+{
+    if(receiveData->serialPortConnect())
+    {
+        qDebug() << "Opened";
+
+        ui->connectPushButton->setEnabled(false);
+        ui->actionConnect->setEnabled(false);
+        ui->disconnectPushButton->setEnabled(true);
+        ui->actionDisconnect->setEnabled(false);
+
+        ui->consoleTextEdit->append("Serial port " + SerialPortSettingModel::getInstance()->getPortName() + " is open!");
+        ui->consoleTextEdit->append("Baudrate: " + QString::number(SerialPortSettingModel::getInstance()->getBaudRate()));
+
+    }
+    else
+    {
+        ui->consoleTextEdit->append("Serial port " + SerialPortSettingModel::getInstance()->getPortName() + " could not be opened");
+    }
+}
+
+void MainWindow::on_actionDisconnect_triggered()
+{
+    receiveData->serialPortDisconnect();
+    ui->connectPushButton->setEnabled(true);
+    ui->actionConnect->setEnabled(true);
+    ui->disconnectPushButton->setEnabled(false);
+    ui->actionDisconnect->setEnabled(false);
+
+    ui->consoleTextEdit->append("Serial port " + SerialPortSettingModel::getInstance()->getPortName() + " is close!");
+}
+
+void MainWindow::on_actionSettings_triggered()
+{
+    SerialPortSettingsDialog* dialog = new SerialPortSettingsDialog(this);
+
+    dialog->setModal(true);
+
+    dialog->exec();
 }
