@@ -43,7 +43,6 @@ MainWindow::MainWindow(QWidget *parent) :
     this->showPointsOnGraph = false;
     ui->plotWidget->addGraph(); // blue line
     ui->plotWidget->graph(0)->setPen(QPen(Qt::blue));
-//    ui->plotWidget->graph(0)->setBrush(QBrush(QColor(240, 255, 200)));
     ui->plotWidget->graph(0)->setAntialiasedFill(false);
     ui->plotWidget->addGraph(); // red line
     ui->plotWidget->graph(1)->setPen(QPen(Qt::red));
@@ -63,9 +62,8 @@ MainWindow::MainWindow(QWidget *parent) :
     // Allow user to drag axis ranges with mouse, zoom with mouse wheel and select graphs by clicking:
     ui->plotWidget->setInteractions(QCP::iRangeDrag | QCP::iRangeZoom | QCP::iSelectPlottables);
 
-    // make left and bottom axes transfer their ranges to right and top axes:
-    connect(ui->plotWidget->xAxis, SIGNAL(rangeChanged(QCPRange)), ui->plotWidget->xAxis2, SLOT(setRange(QCPRange)));
-    connect(ui->plotWidget->yAxis, SIGNAL(rangeChanged(QCPRange)), ui->plotWidget->yAxis2, SLOT(setRange(QCPRange)));
+    maxYAxis = FLT_MIN;
+    minYAxis = FLT_MAX;
 
 }
 
@@ -203,8 +201,6 @@ void MainWindow::on_plotRadioButton_toggled(bool checked)
             encoderRList.clear();
             for(int i = 0; i < count; i++)
             {
-                //encoderLList.append(ui->glWidget->getEncoderLList()[i]);
-                //encoderRList.append(ui->glWidget->getEncoderRList()[i]);
                 double value0 = (double)ui->glWidget->getEncoderRList()[i];
                 double value1 = (double)ui->glWidget->getEncoderLList()[i];
 
@@ -212,13 +208,11 @@ void MainWindow::on_plotRadioButton_toggled(bool checked)
                   ui->plotWidget->graph(0)->addData(key, value0);
                   ui->plotWidget->graph(1)->addData(key, value1);
 
-                  //ui->plotWidget->graph(0)->rescaleValueAxis();
-                  //ui->plotWidget->graph(1)->rescaleValueAxis(true);
-
                   if(this->showPointsOnGraph)
                   {
                       ui->plotWidget->graph(2)->addData(key, value0);
-                      //          ui->plotWidget->graph(3)->clearData();
+                      //                 //encoderLList.append(ui->glWidget->getEncoderLList()[i]);
+                      //encoderRList.append(ui->glWidget->getEncoderRList()[i]);         ui->plotWidget->graph(3)->clearData();
                       ui->plotWidget->graph(3)->addData(key, value1);
                   }
 
@@ -238,9 +232,6 @@ void MainWindow::on_plotRadioButton_toggled(bool checked)
 
 void MainWindow::plotVariables(int *variables)
 {
-
-//    static double lastPointKey = 0;
-
     for(int i = 0; i < 200; i = i + 2)
     {
         encoderLList.append(variables[i+1]);
@@ -248,35 +239,25 @@ void MainWindow::plotVariables(int *variables)
         double value0 = (double)variables[i+1];
         double value1 = (double)variables[i];
 
+        maxYAxis = qMax(qMax(value0,value1),maxYAxis);
+        minYAxis = qMin(qMin(value0,value1),minYAxis);
         // add data to lines:
           ui->plotWidget->graph(0)->addData(timeElapsed, value0);
           ui->plotWidget->graph(1)->addData(timeElapsed, value1);
 
-          ui->plotWidget->graph(0)->rescaleValueAxis();
-          ui->plotWidget->graph(1)->rescaleValueAxis(true);
-//          // set data of dots:
-//          ui->plotWidget->graph(2)->clearData();
           if(this->showPointsOnGraph)
           {
               ui->plotWidget->graph(2)->addData(timeElapsed, value0);
-              //          ui->plotWidget->graph(3)->clearData();
               ui->plotWidget->graph(3)->addData(timeElapsed, value1);
           }
-//          // remove data of lines that's outside visible range:
-//          ui->plotWidget->graph(0)->removeDataBefore(key-8);
-//          ui->plotWidget->graph(1)->removeDataBefore(key-8);
-//          // rescale value (vertical) axis to fit the current data:
-//          ui->plotWidget->graph(0)->rescaleValueAxis();
-//          ui->plotWidget->graph(1)->rescaleValueAxis(true);
-//          lastPointKey = key;
 
           timeElapsed++;
     }
 
     ui->plotWidget->xAxis->setRange(0, timeElapsed+10);
-    // make key axis range scroll with the data (at a constant range size of 8):
-//    ui->plotWidget->xAxis->setRange(0, 30, Qt::AlignRight);
-//    ui->plotWidget->xAxis->setRange(0, 8 + key, Qt::AlignLeft);
+    ui->plotWidget->yAxis->setRange(minYAxis*1.05, maxYAxis*1.05);
+
+
     ui->plotWidget->replot();
 
 }
@@ -290,6 +271,9 @@ void MainWindow::on_actionClear_triggered()
 
     this->encoderLList.clear();
     this->encoderRList.clear();
+
+    maxYAxis = FLT_MIN;
+    minYAxis = FLT_MAX;
 
     timeElapsed = 0;
 

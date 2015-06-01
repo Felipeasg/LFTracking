@@ -7,6 +7,8 @@
 #include "buffer.h"
 #include "receivedata.h"
 
+#include <float.h>
+
 namespace Ui {
 class MainWindow;
 }
@@ -80,6 +82,9 @@ private:
     QList<int> encoderLList;
 
     int timeElapsed;
+
+    double maxYAxis;
+    double minYAxis;
 
 };
 
