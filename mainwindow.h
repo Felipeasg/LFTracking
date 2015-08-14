@@ -6,8 +6,11 @@
 
 #include "buffer.h"
 #include "receivedata.h"
+#include "csv.h"
 
 #include <float.h>
+
+using namespace CSV;
 
 namespace Ui {
 class MainWindow;
@@ -65,6 +68,8 @@ private slots:
     void on_actionDisconnect_triggered();
 
     void on_actionSettings_triggered();
+
+    void on_pushButtonDumpData_clicked();
 
 private:
 

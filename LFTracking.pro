@@ -20,7 +20,8 @@ SOURCES += main.cpp\
     serialportsettingsconfigset.cpp \
     serialportsettingmodel.cpp \
     qcustomplot.cpp \
-    receivedata.cpp
+    receivedata.cpp \
+    csv.cpp
 
 HEADERS  += mainwindow.h \
     glwidget.h \
@@ -29,7 +30,8 @@ HEADERS  += mainwindow.h \
     serialportsettingsconfigset.h \
     serialportsettingmodel.h \
     qcustomplot.h \
-    receivedata.h
+    receivedata.h \
+    csv.h
 
 FORMS    += mainwindow.ui \
     serialportsettingsdialog.ui

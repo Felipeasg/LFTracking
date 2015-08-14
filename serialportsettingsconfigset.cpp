@@ -2,7 +2,8 @@
 
 SerialPortSettingsConfigset::SerialPortSettingsConfigset()
 {
-    portName = "ttyUSB0";
+//    portName = "ttyUSB0";
+    portName = "COM6";
     baudRate = 115200;
     dataBits = QSerialPort::Data8;
     parity = QSerialPort::NoParity;

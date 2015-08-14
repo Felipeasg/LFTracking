@@ -16,18 +16,21 @@ public:
 
     bool serialPortConnect();
     void serialPortDisconnect();
+    void reset();
 
 signals:
     void dataDecoded(int* decodedData);
 
 public slots:
     void serialReceived();
+    void timeout();
 
 private:
 
     int decode();
     bool processPreamble();
     bool processData();
+
 
     QSerialPort* serialPort;
 
@@ -37,6 +40,10 @@ private:
     int decoderState;
 
     int payloadDecoded[200];
+
+    int count;
+
+    QTimer* timeoutTimer;
 };
 
 #endif // RECEIVEDATA_H

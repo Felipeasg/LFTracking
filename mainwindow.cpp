@@ -179,8 +179,9 @@ void MainWindow::on_deadReckoningRadioButton_toggled(bool checked)
 
             ui->glWidget->update();
         }
-        connect(receiveData, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
         disconnect(receiveData, SIGNAL(dataDecoded(int*)), this, SLOT(plotVariables(int*)));
+        connect(receiveData, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
+
     }
 }
 
@@ -236,22 +237,23 @@ void MainWindow::plotVariables(int *variables)
     {
         encoderLList.append(variables[i+1]);
         encoderRList.append(variables[i]);
+
         double value0 = (double)variables[i+1];
         double value1 = (double)variables[i];
 
         maxYAxis = qMax(qMax(value0,value1),maxYAxis);
         minYAxis = qMin(qMin(value0,value1),minYAxis);
         // add data to lines:
-          ui->plotWidget->graph(0)->addData(timeElapsed, value0);
-          ui->plotWidget->graph(1)->addData(timeElapsed, value1);
+        ui->plotWidget->graph(0)->addData(timeElapsed, value0);
+        ui->plotWidget->graph(1)->addData(timeElapsed, value1);
 
-          if(this->showPointsOnGraph)
-          {
-              ui->plotWidget->graph(2)->addData(timeElapsed, value0);
-              ui->plotWidget->graph(3)->addData(timeElapsed, value1);
-          }
+        if(this->showPointsOnGraph)
+        {
+            ui->plotWidget->graph(2)->addData(timeElapsed, value0);
+            ui->plotWidget->graph(3)->addData(timeElapsed, value1);
+        }
 
-          timeElapsed++;
+        timeElapsed++;
     }
 
     ui->plotWidget->xAxis->setRange(0, timeElapsed+10);
@@ -271,6 +273,8 @@ void MainWindow::on_actionClear_triggered()
 
     this->encoderLList.clear();
     this->encoderRList.clear();
+
+//    receiveData->reset();
 
     maxYAxis = FLT_MIN;
     minYAxis = FLT_MAX;
@@ -333,4 +337,34 @@ void MainWindow::on_actionSettings_triggered()
     dialog->setModal(true);
 
     dialog->exec();
+}
+
+void MainWindow::on_pushButtonDumpData_clicked()
+{
+    QFileInfo fileinfo  = QFileDialog::getSaveFileName(this,
+                                               tr("Save data"),
+                                               QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory),
+                                               tr("data (*.csv)"));
+    QString filename = fileinfo.fileName();
+    QString filePath = fileinfo.filePath();
+
+    if(!filename.isEmpty())
+    {
+        QList<QStringList> cvs;
+        for(int i = 0; i < encoderLList.count(); i++)
+        {
+            QStringList line;
+            line.append(QString::number(encoderLList[i]));
+            line.append(QString::number(encoderRList[i]));
+
+            cvs.append(line);
+            //ui->textEditData->append(QString::number(encoderLList[i]) + "\t" + QString::number(encoderRList[i]));
+        }
+
+        ::CSV::write(cvs, filePath ,",");
+    }
+//    else
+//    {
+//        QMessageBox::warning(this, "Warning!!","Set a path to save data!!!");
+//    }
 }
