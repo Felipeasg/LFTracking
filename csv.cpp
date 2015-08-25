@@ -115,7 +115,7 @@ bool CSV::write(const QList<QStringList> data, const QString &filename, const QS
                 output << value;
             }
         }
-        out << output.join(",") << "\r\n";
+        out << output.join(";") << "\r\n";
     }
 
     file.close();

@@ -19,7 +19,7 @@ public:
     void reset();
 
 signals:
-    void dataDecoded(int* decodedData);
+    void dataDecoded(float* decodedData);
 
 public slots:
     void serialReceived();
@@ -39,7 +39,8 @@ private:
 
     int decoderState;
 
-    int payloadDecoded[200];
+    float dataconverted[200];
+    char payloadDecoded[800];
 
     int count;
 

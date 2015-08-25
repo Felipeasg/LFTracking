@@ -73,7 +73,7 @@ public slots:
     void setLeftMouseButtonMode(const GLWidget::LeftMouseButtonMode mode);
     void update();
 
-    void addEncoderPulesVrVl(int *encoders);
+    void addEncoderPulesVrVl(float *encoders);
 
 protected:
     //opengl events

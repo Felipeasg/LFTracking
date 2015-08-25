@@ -53,7 +53,7 @@ private slots:
 
     void on_plotRadioButton_toggled(bool checked);
 
-    void plotVariables(int* variables);
+    void plotVariables(float *variables);
 
     void on_actionClear_triggered();
 
@@ -83,8 +83,8 @@ private:
 
     bool showPointsOnGraph;
 
-    QList<int> encoderRList;
-    QList<int> encoderLList;
+    QList<float> encoderRList;
+    QList<float> encoderLList;
 
     int timeElapsed;
 

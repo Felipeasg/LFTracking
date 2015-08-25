@@ -190,13 +190,14 @@ bool ReceiveData::processData()
         //static int i = 0;
         inBuffer->getN((char *)payloadDecoded, 0, PAYLOAD_SIZE);
 
+        memcpy(dataconverted, payloadDecoded, PAYLOAD_SIZE);
         //qDebug() << "received - " << i;
         //i++;
 //        for(int i = 0; i < 200; i++)
 //        {
 //            qDebug() << payloadDecoded[i];
 //        }
-        emit dataDecoded(payloadDecoded);
+        emit dataDecoded(dataconverted);
         return true;
 }
 

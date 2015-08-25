@@ -274,7 +274,7 @@ void GLWidget::update()
     updateGL();
 }
 
-void GLWidget::addEncoderPulesVrVl(int* encoders)
+void GLWidget::addEncoderPulesVrVl(float* encoders)
 {
     qDebug() << "D-R";
     if(deadReckoningMethod == INTEGRAL)

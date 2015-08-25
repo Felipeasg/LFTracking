@@ -226,12 +226,12 @@ void MainWindow::on_plotRadioButton_toggled(bool checked)
             ui->plotWidget->replot();
         }
 
-        connect(receiveData, SIGNAL(dataDecoded(int*)), this, SLOT(plotVariables(int*)));
-        disconnect(receiveData, SIGNAL(dataDecoded(int*)), ui->glWidget, SLOT(addEncoderPulesVrVl(int*)));
+        connect(receiveData, SIGNAL(dataDecoded(float*)), this, SLOT(plotVariables(float*)));
+        disconnect(receiveData, SIGNAL(dataDecoded(float*)), ui->glWidget, SLOT(addEncoderPulesVrVl(float*)));
     }
 }
 
-void MainWindow::plotVariables(int *variables)
+void MainWindow::plotVariables(float *variables)
 {
     for(int i = 0; i < 200; i = i + 2)
     {
@@ -361,7 +361,7 @@ void MainWindow::on_pushButtonDumpData_clicked()
             //ui->textEditData->append(QString::number(encoderLList[i]) + "\t" + QString::number(encoderRList[i]));
         }
 
-        ::CSV::write(cvs, filePath ,",");
+        ::CSV::write(cvs, filePath ,";");
     }
 //    else
 //    {
