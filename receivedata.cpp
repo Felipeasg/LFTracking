@@ -210,7 +210,7 @@ void ReceiveData::timeout()
     {
         inBuffer->getByte(&n);
     }
-    qDebug() << "Timeout";
+    //qDebug() << "Timeout";
 
     timeoutTimer->stop();
 }

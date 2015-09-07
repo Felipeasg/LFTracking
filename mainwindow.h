@@ -91,6 +91,9 @@ private:
     double maxYAxis;
     double minYAxis;
 
+    QString filenameold;
+    QString filepathold;
+
 };
 
 #endif // MAINWINDOW_H

@@ -341,12 +341,26 @@ void MainWindow::on_actionSettings_triggered()
 
 void MainWindow::on_pushButtonDumpData_clicked()
 {
-    QFileInfo fileinfo  = QFileDialog::getSaveFileName(this,
-                                               tr("Save data"),
-                                               QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory),
-                                               tr("data (*.csv)"));
+     QFileInfo fileinfo;
+    if(filepathold.isEmpty())
+    {
+        fileinfo  = QFileDialog::getSaveFileName(this,
+                                                           tr("Save data"),
+                                                           QStandardPaths::locate(QStandardPaths::HomeLocation, QString(), QStandardPaths::LocateDirectory),
+                                                           tr("data (*.csv)"));
+    }
+    else
+    {
+        fileinfo  = QFileDialog::getSaveFileName(this,
+                                                           tr("Save data"),
+                                                           filepathold,
+                                                           tr("data (*.csv)"));
+    }
+
     QString filename = fileinfo.fileName();
     QString filePath = fileinfo.filePath();
+
+
 
     if(!filename.isEmpty())
     {
@@ -362,6 +376,9 @@ void MainWindow::on_pushButtonDumpData_clicked()
         }
 
         ::CSV::write(cvs, filePath ,";");
+
+        filenameold = filename;
+        filepathold = filePath;
     }
 //    else
 //    {
