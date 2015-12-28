@@ -65,6 +65,11 @@ void ReceiveData::serialPortDisconnect()
     disconnect(serialPort, SIGNAL(readyRead()), this, SLOT(serialReceived()));
 }
 
+void ReceiveData::sendData(QString dataStr)
+{
+    serialPort->write(dataStr.toLatin1(), dataStr.toLatin1().count());
+}
+
 void ReceiveData::reset()
 {
     serialPort->readAll();

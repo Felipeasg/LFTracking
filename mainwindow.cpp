@@ -385,3 +385,33 @@ void MainWindow::on_pushButtonDumpData_clicked()
 //        QMessageBox::warning(this, "Warning!!","Set a path to save data!!!");
 //    }
 }
+
+void MainWindow::on_pushButtonEnableDCDC_clicked()
+{
+    receiveData->sendData("si");
+}
+
+void MainWindow::on_pushButtonSetSpeed_clicked()
+{
+    receiveData->sendData("sp " + ui->lineEditVelRPM->text());
+}
+
+void MainWindow::on_pushButtonSetKp_clicked()
+{
+    receiveData->sendData("kp " + ui->lineEditKp->text());
+}
+
+void MainWindow::on_pushButtonSetKi_clicked()
+{
+    receiveData->sendData("ki " + ui->lineEditKi->text());
+}
+
+void MainWindow::on_pushButtonSetKd_clicked()
+{
+    receiveData->sendData("kd " + ui->lineEditKd->text());
+}
+
+void MainWindow::on_pushButton_clicked()
+{
+    receiveData->sendData("ss");
+}

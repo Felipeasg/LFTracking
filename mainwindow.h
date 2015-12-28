@@ -71,6 +71,18 @@ private slots:
 
     void on_pushButtonDumpData_clicked();
 
+    void on_pushButtonEnableDCDC_clicked();
+
+    void on_pushButtonSetSpeed_clicked();
+
+    void on_pushButtonSetKp_clicked();
+
+    void on_pushButtonSetKi_clicked();
+
+    void on_pushButtonSetKd_clicked();
+
+    void on_pushButton_clicked();
+
 private:
 
 

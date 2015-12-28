@@ -16,7 +16,9 @@ public:
 
     bool serialPortConnect();
     void serialPortDisconnect();
+    void sendData(QString dataStr);
     void reset();
+
 
 signals:
     void dataDecoded(float* decodedData);
